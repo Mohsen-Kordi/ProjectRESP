@@ -50,6 +50,42 @@ def load_df(_db , _deliminator, **kwargs):
 
 
 
+
+
+def tm_stamp(_fs , _timestamp):
+    
+    """
+    Prints some information from data file.
+
+    Parameters
+    ----------
+    _fs : int
+        Sampling Frequency.
+    _timestamp : list[Start time, end Time]
+        Samples timestamp information.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    print(f'Sampling frequency is {_fs} Hz.\n')
+    print(f'Sampling start and end times are {_timestamp[0]} and {_timestamp[1]} respectively.')
+    print(f'Duration of sampling is {timestamp[1]-timestamp[0]} s.')    
+
+
+
+
+
+
+
+
+
+
+
+
+
 def plt_df(_df, _fs, **kwargs):
     """
     Plots all columns of data.
@@ -176,13 +212,52 @@ def statistic_df(_df):
 
 
 
-def Fanalysis_df(_df , _fs):
+def Fanalysis_df(_df, _fs, **kwargs):
+    """
+    Calculates FFT of the given dataframe.
+
+    Parameters
+    ----------
+    _df : pandas.DataFrame
+        Input data to calculate fft on it.
+    _fs : int
+        Sampling frequency.
+    **kwargs : string
+        Optional arguments as follow:
+            rb : Boolean
+                If True the bias will be removed (set power of freq=0 to zero). Default is True.
+            pf : Boolean
+                If True negetive frequencies and their related FFT removed from return result. Default is False.
+
+    Returns
+    -------
+    _fft_df : pandas.DataFrame
+        FFT of input dataframe.
+    _fft_power : pandas.DataFrame
+        Power of FFT of input dataframe.
+    _freq : list
+        List of frequency of FFT.
+
+    """
     
-    _fft_df = fft.fft(np.array(_df))
-    _fft_power = np.abs(_fft_df)
-    _fft_freq = fft.fftfreq(_fft_df.shape[0] , d=1/_fs)
+    _remove_bias = kwargs.get('rb' , True)
+    _pos_freq = kwargs.get('pf' , False)
+    
+    
+    _fft_df = _df.apply(np.fft.fft)
+    _freq = fft.fftfreq(_fft_df.shape[0] , d=1/_fs)   
+    
+    if _remove_bias:
+        _fft_df.loc[0] = 0
+
+    if _pos_freq:
+        _fft_df = _fft_df.drop(_fft_df[_freq <= 0].index)
+        _freq = _freq[np.where(_freq > 0)]    
+
+    _fft_power = _fft_df.apply(np.abs)
+    
    
-    return pd.DataFrame(_fft_df , columns=_df.columns)
+    return _fft_df, _fft_power, _freq
 
 
 
